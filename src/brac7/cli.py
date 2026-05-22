@@ -88,9 +88,10 @@ def _prompt_members() -> list[str]:
 
 
 def _prompt_options(args: argparse.Namespace) -> BracketOptions:
-    print("\n=== brac7 bracket setup ===\n")
+    if args.interactive and not args.no_interactive:
+        print("\n=== brac7 bracket setup ===\n")
 
-    if not args.title:
+    if not args.title and (args.interactive and not args.no_interactive):
         args.title = input("Bracket title [Tournament Bracket]: ").strip() or "Tournament Bracket"
 
     if args.interactive and not args.no_interactive:
