@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>brac7 — Bracket Creator</title>
+  <link rel="stylesheet" href="/static/brac7.css">
+</head>
+<body>
+  <header class="top">
+    <h1>brac7</h1>
+    <p>Tournament bracket creator — CLI + library + 2D workspace</p>
+    <a class="btn primary" href="{% url 'create_bracket' %}">New bracket</a>
+  </header>
+  <main>
+    <h2>Recent brackets</h2>
+    <ul class="project-list">
+      {% for p in projects %}
+      <li>
+        <a href="{% url 'bracket_detail' p.pk %}">{{ p.title }}</a>
+        <span class="meta">{{ p.format }}</span>
+        <a href="{% url 'workspace_design' p.pk %}">Design →</a>
+      </li>
+      {% empty %}
+      <li>No brackets yet.</li>
+      {% endfor %}
+    </ul>
+  </main>
+</body>
+</html>

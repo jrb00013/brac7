@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ project.title }} — brac7</title>
+  <link rel="stylesheet" href="/static/brac7.css">
+</head>
+<body>
+  <header class="top">
+    <a href="{% url 'home' %}">← brac7</a>
+    <h1>{{ project.title }}</h1>
+    <a class="btn" href="{% url 'workspace_design' project.pk %}">2D workspace</a>
+  </header>
+  <main>
+    <p>{{ bracket.format_label }} · size {{ bracket.size }} · {{ member_count }} entrants</p>
+    <div class="export-bar">
+      <a href="{% url 'export_file' project.pk 'xlsx' %}">XLSX</a>
+      <a href="{% url 'export_file' project.pk 'pdf' %}">PDF</a>
+      <a href="{% url 'export_file' project.pk 'md' %}">Markdown</a>
+      <a href="{% url 'export_file' project.pk 'mermaid' %}">Mermaid</a>
+    </div>
+    {% for round in rounds %}
+    <section class="round">
+      <h2>{{ round.name }}</h2>
+      <ul>
+        {% for m in round.matches %}
+        <li><strong>{{ m.label }}</strong> — {{ m.participant_a|default:"TBD" }} vs {{ m.participant_b|default:"TBD" }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endfor %}
+  </main>
+</body>
+</html>
