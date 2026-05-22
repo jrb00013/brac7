@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Workspace — {{ project.title }}</title>
+  <link rel="stylesheet" href="/static/brac7.css">
+</head>
+<body class="workspace-body">
+  <header class="top workspace-toolbar">
+    <a href="{% url 'bracket_detail' project.pk %}">← {{ project.title }}</a>
+    <span>2D Bracket Workspace</span>
+    <button id="btn-fit" class="btn">Fit view</button>
+    <button id="btn-save" class="btn primary">Save layout</button>
+  </header>
+  <aside class="tools">
+    <h3>Options</h3>
+    <p><strong>Format:</strong> {{ project.format }}</p>
+    <p><strong>Seeding:</strong> {{ project.seeding }}</p>
+    <p><strong>Byes:</strong> {{ project.supports_byes }}</p>
+    <p><strong>Match format:</strong> {{ project.match_format }}</p>
+    <p class="hint">Drag matches to arrange. Click a match to pick winner (interactive).</p>
+  </aside>
+  <canvas id="bracket-canvas" width="1600" height="900"></canvas>
+  <script id="bracket-data" type="application/json">{{ bracket_json|safe }}</script>
+  <script src="/static/workspace.js"></script>
+</body>
+</html>
