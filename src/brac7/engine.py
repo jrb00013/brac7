@@ -11,7 +11,7 @@ from brac7.models import (
     Round,
     TournamentFormat,
 )
-from brac7.seeding import assign_seeds, build_first_round_slots, next_power_of_two
+from brac7.seeding import Slot, assign_seeds, build_first_round_slots, next_power_of_two
 
 
 class BracketEngine:
@@ -32,10 +32,149 @@ class BracketEngine:
             )
 
         if self.options.format == TournamentFormat.SINGLE_ELIMINATION:
-            return self._single_elimination(participants, size)
+            if self.options.supports_byes and count < size:
+                return self._single_elimination_with_top_byes(participants, size)
+            return self._single_elimination_full(participants, size)
         return self._double_elimination(participants, size)
 
-    def _single_elimination(self, participants: list[Participant], size: int) -> Bracket:
+    def _single_elimination_with_top_byes(
+        self, participants: list[Participant], size: int
+    ) -> Bracket:
+        """
+        When N < bracket size: top (size - N) seeds skip round 1.
+        Only lower seeds play round 1; winners join the top seeds in round 2.
+        """
+        n = len(participants)
+        num_byes = size - n
+        bye_teams = participants[:num_byes]
+        play_in = participants[num_byes:]
+
+        bracket = Bracket(
+            title=self.options.title,
+            options=self.options,
+            participants=participants,
+            size=size,
+        )
+        rounds: list[Round] = []
+
+        # Round 1: only play-in teams (no phantom 1v32 ghost matches)
+        r1_matches: list[MatchNode] = []
+        play_count = len(play_in)
+        if play_count >= 2:
+            for i in range(play_count // 2):
+                a = play_in[i]
+                b = play_in[play_count - 1 - i]
+                node = MatchNode(
+                    id=f"W-R1-M{i + 1}",
+                    round_index=0,
+                    match_index=i,
+                    bracket="winners",
+                    participant_a=a.name,
+                    participant_b=b.name,
+                    seed_a=a.seed,
+                    seed_b=b.seed,
+                    is_bye=False,
+                )
+                node.label = self._match_label(node, 1)
+                r1_matches.append(node)
+
+        if r1_matches:
+            rounds.append(Round(0, self._round_name_for_play_in(len(r1_matches)), r1_matches))
+
+        # Round 2: round-of-(size/2) with top seeds + play-in winners in standard positions
+        r2_team_count = size // 2
+        current_matches = self._build_round_from_seeds(
+            participants,
+            num_byes,
+            r1_matches,
+            r2_team_count,
+            round_num=2,
+            round_index=1,
+        )
+        rounds.append(Round(1, self._round_name(0, r2_team_count), current_matches))
+        round_idx = 2
+        round_num = 3
+
+        while len(current_matches) > 1:
+            next_matches: list[MatchNode] = []
+            for i in range(0, len(current_matches), 2):
+                left, right = current_matches[i], current_matches[i + 1]
+                match_idx = i // 2
+                node = MatchNode(
+                    id=f"W-R{round_num}-M{match_idx + 1}",
+                    round_index=round_idx,
+                    match_index=match_idx,
+                    bracket="winners",
+                    feeds_from=(left.id, right.id),
+                )
+                node.label = self._match_label(node, round_num)
+                next_matches.append(node)
+            rounds.append(
+                Round(round_idx, self._round_name(round_idx, size // 2), next_matches)
+            )
+            current_matches = next_matches
+            round_idx += 1
+            round_num += 1
+
+        bracket.rounds = rounds
+        return bracket
+
+    def _build_round_from_seeds(
+        self,
+        all_participants: list[Participant],
+        num_byes: int,
+        r1_matches: list[MatchNode],
+        team_count: int,
+        round_num: int,
+        round_index: int,
+    ) -> list[MatchNode]:
+        """Pair teams using standard bracket order; play-in winners fill seeds num_byes+1..N."""
+        from brac7.seeding import standard_seed_order
+
+        by_seed = {p.seed: p for p in all_participants}
+        pair_order: list[Slot] = []
+        for seed_num in standard_seed_order(team_count):
+            # Only top (size - N) bye seeds sit in round 2; play-in teams are TBD winners
+            if seed_num <= num_byes:
+                pair_order.append(Slot(by_seed.get(seed_num), seed_num))
+            else:
+                pair_order.append(Slot(None, seed_num))
+
+        matches: list[MatchNode] = []
+        # Play-in winners fill seeds num_byes+1 .. num_byes+len(r1_matches)
+        r1_feed = {num_byes + 1 + i: m for i, m in enumerate(r1_matches)}
+
+        for i in range(0, len(pair_order), 2):
+            a, b = pair_order[i], pair_order[i + 1]
+            match_idx = i // 2
+            feeds: list[str] = []
+            if a.participant is None and a.seed in r1_feed:
+                feeds.append(r1_feed[a.seed].id)
+            if b.participant is None and b.seed in r1_feed:
+                feeds.append(r1_feed[b.seed].id)
+
+            has_a = a.participant is not None
+            has_b = b.participant is not None
+            is_bye = (has_a ^ has_b) and self.options.supports_byes
+
+            node = MatchNode(
+                id=f"W-R{round_num}-M{match_idx + 1}",
+                round_index=round_index,
+                match_index=match_idx,
+                bracket="winners",
+                participant_a=a.participant.name if a.participant else None,
+                participant_b=b.participant.name if b.participant else None,
+                seed_a=a.seed if a.participant else a.seed,
+                seed_b=b.seed if b.participant else b.seed,
+                is_bye=is_bye,
+                feeds_from=tuple(feeds),
+            )
+            node.label = self._match_label(node, round_num)
+            matches.append(node)
+        return matches
+
+    def _single_elimination_full(self, participants: list[Participant], size: int) -> Bracket:
+        """Full bracket when N == size (no structural byes)."""
         bracket = Bracket(
             title=self.options.title,
             options=self.options,
@@ -49,7 +188,9 @@ class BracketEngine:
         for i in range(0, len(slots), 2):
             a, b = slots[i], slots[i + 1]
             match_idx = i // 2
-            is_bye = a.participant is None or b.participant is None
+            has_a, has_b = a.participant is not None, b.participant is not None
+            # True bye = exactly one competitor (not double-empty ghost)
+            is_bye = (has_a ^ has_b) and self.options.supports_byes
             node = MatchNode(
                 id=f"W-R1-M{match_idx + 1}",
                 round_index=0,
@@ -57,9 +198,9 @@ class BracketEngine:
                 bracket="winners",
                 participant_a=a.participant.name if a.participant else None,
                 participant_b=b.participant.name if b.participant else None,
-                seed_a=a.seed if a.participant else a.seed,
-                seed_b=b.seed if b.participant else b.seed,
-                is_bye=is_bye and self.options.supports_byes,
+                seed_a=a.seed if a.participant else None,
+                seed_b=b.seed if b.participant else None,
+                is_bye=is_bye,
             )
             node.label = self._match_label(node, 1)
             current_matches.append(node)
@@ -89,9 +230,17 @@ class BracketEngine:
         self._advance_byes(bracket)
         return bracket
 
+    def _round_name_for_play_in(self, num_matches: int) -> str:
+        if num_matches == 1:
+            return "Play-in Final"
+        return "Play-in Round"
+
     def _double_elimination(self, participants: list[Participant], size: int) -> Bracket:
-        """Winners bracket + placeholder losers bracket structure."""
-        winners = self._single_elimination(participants, size)
+        winners = (
+            self._single_elimination_with_top_byes(participants, size)
+            if self.options.supports_byes and len(participants) < size
+            else self._single_elimination_full(participants, size)
+        )
         losers_round = Round(
             index=len(winners.rounds),
             name="Losers Bracket (placeholder)",
@@ -106,14 +255,12 @@ class BracketEngine:
             ],
         )
         winners.rounds.append(losers_round)
-        winners.options = self.options
         return winners
 
     def _advance_byes(self, bracket: Bracket) -> None:
-        """Propagate bye winners into next-round slots (display only)."""
+        """Propagate single-sided bye winners into next-round slots."""
         if not self.options.supports_byes:
             return
-        by_id = {m.id: m for m in bracket.all_matches()}
         for rnd in bracket.rounds:
             for m in rnd.matches:
                 if not m.is_bye:
@@ -144,8 +291,14 @@ class BracketEngine:
         base = f"R{round_number}-M{match.match_index + 1}"
         if fmt == MatchFormat.COMPACT:
             return base
-        a = match.participant_a or ("BYE" if match.is_bye else "TBD")
-        b = match.participant_b or ("BYE" if match.is_bye else "TBD")
+        a = match.participant_a or self._empty_slot_label(match, "a")
+        b = match.participant_b or self._empty_slot_label(match, "b")
         if fmt == MatchFormat.DETAILED:
             return f"{base} [{match.bracket}]: {a} vs {b}"
         return f"{base}: {a} vs {b}"
+
+    def _empty_slot_label(self, match: MatchNode, side: str) -> str:
+        """BYE only on the missing slot in a 1v0 match; TBD for unfilled later rounds."""
+        if match.is_bye:
+            return "BYE"
+        return "TBD"

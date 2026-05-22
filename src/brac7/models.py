@@ -69,7 +69,9 @@ class MatchNode:
         name = self.participant_a if side == "a" else self.participant_b
         seed = self.seed_a if side == "a" else self.seed_b
         if name is None:
-            if self.is_bye:
+            # BYE = empty slot in a 1v0 auto-advance only; not "everyone vs ghost seed"
+            other = self.participant_b if side == "a" else self.participant_a
+            if self.is_bye and other:
                 return "BYE"
             return "TBD"
         if options.match_format == MatchFormat.COMPACT:
