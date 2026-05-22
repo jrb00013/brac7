@@ -40,17 +40,19 @@ def _winners_rounds(bracket: Bracket) -> list:
 
 
 def _compute_y_centers(match_counts: list[int], block_h: float) -> list[list[float]]:
+    """Even vertical spacing per round (handles play-in ≠ half of next round)."""
+    if not match_counts:
+        return []
+    max_n = max(match_counts)
     unit = block_h * 2
-    levels: list[list[float]] = [[i * unit + block_h for i in range(match_counts[0])]]
-    for idx in range(1, len(match_counts)):
-        prev = levels[-1]
-        n = match_counts[idx]
-        curr = []
-        for j in range(n):
-            y0 = prev[2 * j]
-            y1 = prev[2 * j + 1] if 2 * j + 1 < len(prev) else prev[2 * j]
-            curr.append((y0 + y1) / 2.0)
-        levels.append(curr)
+    total_span = unit * max(max_n - 1, 1) + block_h * 2
+    levels: list[list[float]] = []
+    for n in match_counts:
+        if n <= 1:
+            levels.append([total_span / 2])
+            continue
+        step = (total_span - 2 * block_h) / (n - 1)
+        levels.append([block_h + i * step for i in range(n)])
     return levels
 
 
