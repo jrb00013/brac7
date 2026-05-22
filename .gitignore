@@ -18,8 +18,7 @@ output/*
 !output/.gitkeep
 *.xlsx
 *.pdf
-!examples/*.xlsx
-!examples/*.pdf
+!examples/generated/**
 .DS_Store
 db.sqlite3
 brac7_site/staticfiles/
