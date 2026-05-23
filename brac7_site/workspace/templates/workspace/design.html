@@ -1,27 +1,34 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Workspace — {{ project.title }}</title>
-  <link rel="stylesheet" href="/static/brac7.css">
-</head>
-<body class="workspace-body">
+{% extends "brackets/base.html" %}
+{% block title %}Workspace — {{ project.title }}{% endblock %}
+{% block extra_head %}
+<style>
+  .workspace-body { display: grid; grid-template-columns: 220px 1fr; grid-template-rows: auto 1fr; height: calc(100vh - 49px); }
+  .workspace-toolbar { grid-column: 1 / -1; }
+  .tools { grid-row: 2; padding: 1rem; background: var(--panel); border-right: 1px solid var(--border); font-size: 0.85rem; overflow-y: auto; }
+  #bracket-canvas { grid-row: 2; width: 100%; height: 100%; background: #0a0e14; cursor: grab; display: block; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="workspace-body">
   <header class="top workspace-toolbar">
     <a href="{% url 'bracket_detail' project.pk %}">← {{ project.title }}</a>
-    <span>2D Bracket Workspace</span>
-    <button id="btn-fit" class="btn">Fit view</button>
+    <span style="color:var(--muted);font-size:0.85rem;">2D Workspace</span>
+    <span style="flex:1"></span>
+    <button id="btn-zoom-out" class="btn" title="Zoom out">−</button>
+    <button id="btn-zoom-in" class="btn" title="Zoom in">+</button>
+    <button id="btn-fit" class="btn">Fit</button>
     <button id="btn-save" class="btn primary">Save layout</button>
   </header>
   <aside class="tools">
-    <h3>Options</h3>
-    <p><strong>Format:</strong> {{ project.format }}</p>
-    <p><strong>Seeding:</strong> {{ project.seeding }}</p>
-    <p><strong>Byes:</strong> {{ project.supports_byes }}</p>
-    <p><strong>Match format:</strong> {{ project.match_format }}</p>
-    <p class="hint">Drag matches to arrange. Click a match to pick winner (interactive).</p>
+    <h3>{{ project.title }}</h3>
+    <p><strong>Format:</strong> {{ project.get_format_display }}</p>
+    <p><strong>Seeding:</strong> {{ project.get_seeding_display }}</p>
+    <p><strong>Match format:</strong> {{ project.get_match_format_display }}</p>
+    <hr style="border-color:var(--border);margin:1rem 0;">
+    <p class="hint">Drag matches to rearrange. Double-click a match to record a winner. Scroll to zoom. Drag empty space to pan.</p>
   </aside>
-  <canvas id="bracket-canvas" width="1600" height="900"></canvas>
+  <canvas id="bracket-canvas"></canvas>
   <script id="bracket-data" type="application/json">{{ bracket_json|safe }}</script>
   <script src="/static/workspace.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}
