@@ -206,7 +206,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.interactive or (not args.members and not args.members_file):
         args.interactive = True
 
-    options = _prompt_options(args)
+    try:
+        options = _prompt_options(args)
+    except (EOFError, KeyboardInterrupt):
+        print("\nAborted.", file=sys.stderr)
+        return 130
+
     members = load_members(args)
     try:
         members = ParticipantValidator.validate_names(members)
@@ -214,12 +219,26 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Error: {e}", file=sys.stderr)
         return 1
 
-    engine = BracketEngine(options)
-    bracket = engine.generate(members)
+    try:
+        engine = BracketEngine(options)
+        bracket = engine.generate(members)
+    except ValueError as e:
+        print(f"Error generating bracket: {e}", file=sys.stderr)
+        return 1
+
     formats = resolve_exports(args)
     out_dir = args.output_dir
-    out_dir.mkdir(parents=True, exist_ok=True)
-    paths = run_exports(bracket, out_dir, args.slug, formats)
+    try:
+        out_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        print(f"Error creating output directory {out_dir}: {e}", file=sys.stderr)
+        return 1
+
+    try:
+        paths = run_exports(bracket, out_dir, args.slug, formats)
+    except Exception as e:
+        print(f"Error during export: {e}", file=sys.stderr)
+        return 1
 
     print(f"\nGenerated {bracket.format_label} bracket — {len(bracket.participants)} entrants, size {bracket.size}")
     for p in paths:
