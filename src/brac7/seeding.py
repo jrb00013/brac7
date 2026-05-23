@@ -1,5 +1,3 @@
-"""Seeding and bracket sizing utilities."""
-
 from __future__ import annotations
 
 import random
@@ -16,7 +14,6 @@ def next_power_of_two(n: int) -> int:
 
 
 def standard_seed_order(size: int) -> list[int]:
-    """Return seed numbers in first-round pairing order for a power-of-2 bracket."""
     if size == 1:
         return [1]
     half = size // 2

@@ -1,5 +1,3 @@
-"""Domain models and bracket configuration — source of truth for all exporters."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -19,17 +17,13 @@ class SeedingMode(str, Enum):
 
 
 class MatchFormat(str, Enum):
-    """How match slots are labeled in exports."""
-
-    STANDARD = "standard"  # "R1-M3: Seed 4 vs Seed 12"
-    COMPACT = "compact"  # "R1-M3"
-    DETAILED = "detailed"  # includes bracket path + bye markers
+    STANDARD = "standard"
+    COMPACT = "compact"
+    DETAILED = "detailed"
 
 
 @dataclass(frozen=True)
 class BracketOptions:
-    """Canonical options — PDF, XLSX, Mermaid, CLI, and UI all read this."""
-
     format: TournamentFormat = TournamentFormat.SINGLE_ELIMINATION
     seeding: SeedingMode = SeedingMode.SEEDED
     supports_byes: bool = True
@@ -52,12 +46,10 @@ class Participant:
 
 @dataclass
 class MatchNode:
-    """One match slot in the bracket tree."""
-
     id: str
     round_index: int
     match_index: int
-    bracket: str  # "winners" | "losers" for double elim
+    bracket: str
     participant_a: Optional[str] = None
     participant_b: Optional[str] = None
     seed_a: Optional[int] = None
@@ -70,7 +62,6 @@ class MatchNode:
         name = self.participant_a if side == "a" else self.participant_b
         seed = self.seed_a if side == "a" else self.seed_b
         if name is None:
-            # BYE = empty slot in a 1v0 auto-advance only; not "everyone vs ghost seed"
             other = self.participant_b if side == "a" else self.participant_a
             if self.is_bye and other:
                 return "BYE"
@@ -97,7 +88,7 @@ class Bracket:
     options: BracketOptions
     participants: list[Participant]
     rounds: list[Round] = field(default_factory=list)
-    size: int = 0  # bracket capacity (power of 2)
+    size: int = 0
 
     @property
     def format_label(self) -> str:

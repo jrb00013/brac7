@@ -1,5 +1,3 @@
-"""Interactive bracket state — record winners and advance rounds."""
-
 from __future__ import annotations
 
 import json
@@ -13,13 +11,10 @@ from brac7.models import Bracket, BracketOptions, MatchNode
 
 @dataclass
 class InteractiveState:
-    """Serializable bracket session for UI and library consumers."""
-
     bracket_title: str
     options: dict
     participants: list[dict]
     match_results: dict[str, Optional[str]] = field(default_factory=dict)
-    """match_id -> winner name"""
 
     @classmethod
     def from_bracket(cls, bracket: Bracket) -> InteractiveState:
@@ -52,7 +47,6 @@ class InteractiveState:
         self.match_results[match_id] = winner
 
     def apply_results(self, bracket: Bracket) -> Bracket:
-        """Return a copy of bracket tree with winners advanced to feeder matches."""
         by_id = {m.id: m for m in bracket.all_matches()}
         for match_id, winner in self.match_results.items():
             if not winner:
