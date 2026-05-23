@@ -13,7 +13,7 @@ from brac7.models import (
 from brac7.engine import BracketEngine
 from brac7.interactive import InteractiveState, create_interactive
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __all__ = [
     "Bracket",
     "BracketEngine",
