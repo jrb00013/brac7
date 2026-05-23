@@ -6,6 +6,7 @@ from brac7.models import (
     MatchFormat,
     MatchNode,
     Participant,
+    Round,
     SeedingMode,
     TournamentFormat,
 )
@@ -20,6 +21,7 @@ __all__ = [
     "MatchFormat",
     "MatchNode",
     "Participant",
+    "Round",
     "SeedingMode",
     "TournamentFormat",
     "InteractiveState",

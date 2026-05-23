@@ -6,7 +6,15 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
 from brac7.engine import BracketEngine
-from brac7.exporters import export_markdown, export_mermaid, export_pdf, export_xlsx
+from brac7.exporters import (
+    export_csv,
+    export_html,
+    export_json,
+    export_markdown,
+    export_mermaid,
+    export_pdf,
+    export_xlsx,
+)
 from brac7.interactive import InteractiveState, create_interactive
 from brac7.models import BracketOptions, MatchFormat, SeedingMode, TournamentFormat
 
@@ -73,6 +81,9 @@ def export_file(request: HttpRequest, pk: int, fmt: str) -> FileResponse:
         "pdf": export_pdf,
         "md": export_markdown,
         "mermaid": export_mermaid,
+        "json": export_json,
+        "csv": export_csv,
+        "html": export_html,
     }
     fn = exporters.get(fmt)
     if not fn:

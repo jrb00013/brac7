@@ -8,7 +8,15 @@ from pathlib import Path
 from typing import Sequence
 
 from brac7.engine import BracketEngine
-from brac7.exporters import export_markdown, export_mermaid, export_pdf, export_xlsx
+from brac7.exporters import (
+    export_csv,
+    export_html,
+    export_json,
+    export_markdown,
+    export_mermaid,
+    export_pdf,
+    export_xlsx,
+)
 from brac7.models import BracketOptions, MatchFormat, SeedingMode, TournamentFormat
 
 
@@ -45,7 +53,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--format", "-f",
         type=_parse_format,
         default=TournamentFormat.SINGLE_ELIMINATION,
-        help="single_elimination | double_elimination",
+        help="single_elimination | double_elimination | round_robin",
     )
     p.add_argument(
         "--seeding", "-s",
@@ -65,6 +73,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--pdf", action="store_true", help="Export PDF")
     p.add_argument("--markdown", action="store_true", help="Export Markdown")
     p.add_argument("--mermaid", action="store_true", help="Export Mermaid (.md)")
+    p.add_argument("--json", action="store_true", help="Export JSON")
+    p.add_argument("--csv", action="store_true", help="Export CSV")
+    p.add_argument("--html", action="store_true", help="Export HTML")
     p.add_argument("--all", action="store_true", help="Export all formats")
     p.add_argument("--interactive", "-i", action="store_true", help="Prompt for options")
     p.add_argument("--no-interactive", action="store_true", help="Skip prompts if args provided")
@@ -95,8 +106,13 @@ def _prompt_options(args: argparse.Namespace) -> BracketOptions:
         args.title = input("Bracket title [Tournament Bracket]: ").strip() or "Tournament Bracket"
 
     if args.interactive and not args.no_interactive:
-        fmt = input("Format (single/double) [single]: ").strip().lower() or "single"
-        args.format = _parse_format("double_elimination" if fmt.startswith("d") else "single_elimination")
+        fmt = input("Format (single/double/round_robin) [single]: ").strip().lower() or "single"
+        if fmt.startswith("d"):
+            args.format = _parse_format("double_elimination")
+        elif fmt.startswith("r"):
+            args.format = _parse_format("round_robin")
+        else:
+            args.format = _parse_format("single_elimination")
 
         seed_in = input("Seeding (seeded/random) [seeded]: ").strip().lower() or "seeded"
         args.seeding = _parse_seeding(seed_in)
@@ -135,7 +151,7 @@ def load_members(args: argparse.Namespace) -> list[str]:
 
 def resolve_exports(args: argparse.Namespace) -> set[str]:
     if args.all:
-        return {"xlsx", "pdf", "markdown", "mermaid"}
+        return {"xlsx", "pdf", "markdown", "mermaid", "json", "csv", "html"}
     out: set[str] = set()
     if args.xlsx:
         out.add("xlsx")
@@ -145,6 +161,12 @@ def resolve_exports(args: argparse.Namespace) -> set[str]:
         out.add("markdown")
     if args.mermaid:
         out.add("mermaid")
+    if args.json:
+        out.add("json")
+    if args.csv:
+        out.add("csv")
+    if args.html:
+        out.add("html")
     return out or {"xlsx", "pdf", "markdown", "mermaid"}
 
 
@@ -158,6 +180,12 @@ def run_exports(bracket, out_dir: Path, slug: str, formats: set[str]) -> list[Pa
         written.append(export_markdown(bracket, out_dir / f"{slug}.md"))
     if "mermaid" in formats:
         written.append(export_mermaid(bracket, out_dir / f"{slug}.mmd"))
+    if "json" in formats:
+        written.append(export_json(bracket, out_dir / f"{slug}.json"))
+    if "csv" in formats:
+        written.append(export_csv(bracket, out_dir / f"{slug}.csv"))
+    if "html" in formats:
+        written.append(export_html(bracket, out_dir / f"{slug}.html"))
     return written
 
 

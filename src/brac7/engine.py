@@ -11,6 +11,8 @@ from brac7.models import (
     Round,
     TournamentFormat,
 )
+import itertools
+
 from brac7.seeding import Slot, assign_seeds, build_first_round_slots, next_power_of_two
 
 
@@ -35,7 +37,9 @@ class BracketEngine:
             if self.options.supports_byes and count < size:
                 return self._single_elimination_with_top_byes(participants, size)
             return self._single_elimination_full(participants, size)
-        return self._double_elimination(participants, size)
+        if self.options.format == TournamentFormat.DOUBLE_ELIMINATION:
+            return self._double_elimination(participants, size)
+        return self._round_robin(participants)
 
     def _single_elimination_with_top_byes(
         self, participants: list[Participant], size: int
@@ -256,6 +260,58 @@ class BracketEngine:
         )
         winners.rounds.append(losers_round)
         return winners
+
+    def _round_robin(self, participants: list[Participant]) -> Bracket:
+        n = len(participants)
+        bracket = Bracket(
+            title=self.options.title,
+            options=self.options,
+            participants=participants,
+            size=n,
+        )
+        rounds: list[Round] = []
+        if n % 2 == 1:
+            participants = participants + [Participant("BYE", seed=0)]
+            n += 1
+
+        num_rounds = n - 1
+        num_matches = n // 2
+        all_names = [p.name for p in participants]
+
+        for rnd_idx in range(num_rounds):
+            matches: list[MatchNode] = []
+            for match_idx in range(num_matches):
+                a = all_names[match_idx]
+                b = all_names[n - 1 - match_idx]
+                if "BYE" in (a, b):
+                    continue
+                pa = next(p for p in participants if p.name == a)
+                pb = next(p for p in participants if p.name == b)
+                node = MatchNode(
+                    id=f"RR-R{rnd_idx + 1}-M{match_idx + 1}",
+                    round_index=rnd_idx,
+                    match_index=match_idx,
+                    bracket="round_robin",
+                    participant_a=a,
+                    participant_b=b,
+                    seed_a=pa.seed if pa.seed else None,
+                    seed_b=pb.seed if pb.seed else None,
+                )
+                node.label = self._match_label(node, rnd_idx + 1)
+                matches.append(node)
+
+            rounds.append(
+                Round(rnd_idx, f"Round {rnd_idx + 1}", matches)
+            )
+
+            all_names = (
+                [all_names[0]]
+                + [all_names[-1]]
+                + all_names[1:-1]
+            )
+
+        bracket.rounds = rounds
+        return bracket
 
     def _advance_byes(self, bracket: Bracket) -> None:
         """Propagate single-sided bye winners into next-round slots."""

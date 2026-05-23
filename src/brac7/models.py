@@ -10,6 +10,7 @@ from typing import Optional
 class TournamentFormat(str, Enum):
     SINGLE_ELIMINATION = "single_elimination"
     DOUBLE_ELIMINATION = "double_elimination"
+    ROUND_ROBIN = "round_robin"
 
 
 class SeedingMode(str, Enum):

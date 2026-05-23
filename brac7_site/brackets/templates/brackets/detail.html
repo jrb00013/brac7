@@ -18,6 +18,9 @@
       <a href="{% url 'export_file' project.pk 'pdf' %}">PDF</a>
       <a href="{% url 'export_file' project.pk 'md' %}">Markdown</a>
       <a href="{% url 'export_file' project.pk 'mermaid' %}">Mermaid</a>
+      <a href="{% url 'export_file' project.pk 'json' %}">JSON</a>
+      <a href="{% url 'export_file' project.pk 'csv' %}">CSV</a>
+      <a href="{% url 'export_file' project.pk 'html' %}">HTML</a>
     </div>
     {% for round in rounds %}
     <section class="round">

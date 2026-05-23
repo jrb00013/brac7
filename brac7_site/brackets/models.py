@@ -9,6 +9,7 @@ class BracketProject(models.Model):
         choices=[
             ("single_elimination", "Single elimination"),
             ("double_elimination", "Double elimination"),
+            ("round_robin", "Round robin"),
         ],
     )
     seeding = models.CharField(
