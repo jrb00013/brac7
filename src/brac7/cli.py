@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
+from brac7 import __version__
 from brac7.engine import BracketEngine
 from brac7.exporters import (
     export_csv,
@@ -46,9 +47,17 @@ def _parse_match_format(value: str) -> MatchFormat:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="brac7",
-        description="Generate tournament brackets (XLSX, PDF, Markdown, Mermaid).",
+        description="Generate tournament brackets (XLSX, PDF, Markdown, Mermaid, JSON, CSV, HTML).",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=f"""Examples:
+  brac7 -i --all                     Interactive mode with all export formats
+  brac7 -m Alice Bob Carol --pdf     Quick bracket from CLI args
+  brac7 --members-file names.txt --format round_robin --all
+  brac7 --version                    Show version and exit
+""",
     )
-    p.add_argument("--title", "-t", help="Bracket title")
+    p.add_argument("--version", action="version", version=f"brac7 {__version__}")
+    p.add_argument("--title", "-t", help="Bracket title (default: Tournament Bracket)")
     p.add_argument(
         "--format", "-f",
         type=_parse_format,
@@ -68,7 +77,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--members", "-m", nargs="+", help="Participant names")
     p.add_argument("--members-file", type=Path, help="One name per line")
     p.add_argument("--output-dir", "-o", type=Path, default=Path("output"))
-    p.add_argument("--slug", default="bracket", help="Output filename stem")
+    p.add_argument("--slug", default="bracket", help="Output filename stem (default: bracket)")
     p.add_argument("--xlsx", action="store_true", help="Export Excel")
     p.add_argument("--pdf", action="store_true", help="Export PDF")
     p.add_argument("--markdown", action="store_true", help="Export Markdown")
