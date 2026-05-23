@@ -24,3 +24,11 @@ db.sqlite3
 brac7_site/staticfiles/
 media/
 *.log
+site-env/
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.bak
+*.orig
