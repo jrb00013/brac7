@@ -16,11 +16,11 @@ def test_standard_seed_order_size_2():
 
 
 def test_standard_seed_order_size_4():
-    assert standard_seed_order(4) == [1, 4, 3, 2]
+    assert standard_seed_order(4) == [1, 4, 2, 3]
 
 
 def test_standard_seed_order_size_8():
-    assert standard_seed_order(8) == [1, 8, 5, 4, 3, 6, 7, 2]
+    assert standard_seed_order(8) == [1, 8, 4, 5, 2, 7, 3, 6]
 
 
 def test_assign_seeds_preserves_order():

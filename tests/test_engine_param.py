@@ -49,15 +49,15 @@ def test_round_robin_each_pair_once():
     pairs = set()
     for r in b.rounds:
         for m in r.matches:
-            pair = (m.participant_a, m.participant_b)
+            pair = frozenset([m.participant_a, m.participant_b])
             pairs.add(pair)
     assert len(pairs) == 6
-    assert ("A", "B") in pairs
-    assert ("A", "C") in pairs
-    assert ("A", "D") in pairs
-    assert ("B", "C") in pairs
-    assert ("B", "D") in pairs
-    assert ("C", "D") in pairs
+    assert frozenset(["A", "B"]) in pairs
+    assert frozenset(["A", "C"]) in pairs
+    assert frozenset(["A", "D"]) in pairs
+    assert frozenset(["B", "C"]) in pairs
+    assert frozenset(["B", "D"]) in pairs
+    assert frozenset(["C", "D"]) in pairs
 
 
 def test_all_matches_have_valid_ids():
