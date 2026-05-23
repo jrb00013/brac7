@@ -1,37 +1,42 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>{{ project.title }} — brac7</title>
-  <link rel="stylesheet" href="/static/brac7.css">
-</head>
-<body>
-  <header class="top">
-    <a href="{% url 'home' %}">← brac7</a>
+{% extends "brackets/base.html" %}
+{% block title %}{{ project.title }} — brac7{% endblock %}
+{% block content %}
+  <div class="detail-header">
     <h1>{{ project.title }}</h1>
-    <a class="btn" href="{% url 'workspace_design' project.pk %}">2D workspace</a>
-  </header>
-  <main>
-    <p>{{ bracket.format_label }} · size {{ bracket.size }} · {{ member_count }} entrants</p>
-    <div class="export-bar">
-      <a href="{% url 'export_file' project.pk 'xlsx' %}">XLSX</a>
-      <a href="{% url 'export_file' project.pk 'pdf' %}">PDF</a>
-      <a href="{% url 'export_file' project.pk 'md' %}">Markdown</a>
-      <a href="{% url 'export_file' project.pk 'mermaid' %}">Mermaid</a>
-      <a href="{% url 'export_file' project.pk 'json' %}">JSON</a>
-      <a href="{% url 'export_file' project.pk 'csv' %}">CSV</a>
-      <a href="{% url 'export_file' project.pk 'html' %}">HTML</a>
-    </div>
+    <p class="meta">
+      {{ bracket.format_label }} · size {{ bracket.size }} · {{ member_count }} entrants ·
+      {{ bracket.options.seeding.value }}
+    </p>
+  </div>
+
+  <div class="export-bar">
+    <span class="export-label">Export:</span>
+    <a href="{% url 'export_file' project.pk 'xlsx' %}" class="btn">XLSX</a>
+    <a href="{% url 'export_file' project.pk 'pdf' %}" class="btn">PDF</a>
+    <a href="{% url 'export_file' project.pk 'md' %}" class="btn">Markdown</a>
+    <a href="{% url 'export_file' project.pk 'mermaid' %}" class="btn">Mermaid</a>
+    <a href="{% url 'export_file' project.pk 'json' %}" class="btn">JSON</a>
+    <a href="{% url 'export_file' project.pk 'csv' %}" class="btn">CSV</a>
+    <a href="{% url 'export_file' project.pk 'html' %}" class="btn">HTML</a>
+    <a href="{% url 'workspace_design' project.pk %}" class="btn primary">2D Workspace</a>
+  </div>
+
+  <div class="bracket-view">
     {% for round in rounds %}
     <section class="round">
       <h2>{{ round.name }}</h2>
-      <ul>
+      <ul class="match-list">
         {% for m in round.matches %}
-        <li><strong>{{ m.label }}</strong> — {{ m.participant_a|default:"TBD" }} vs {{ m.participant_b|default:"TBD" }}</li>
+        <li class="match-item{% if m.is_bye %} match-bye{% endif %}">
+          <span class="match-label">{{ m.label }}</span>
+          <span class="match-slot">{{ m.participant_a|default:"TBD" }}</span>
+          <span class="match-vs">vs</span>
+          <span class="match-slot">{{ m.participant_b|default:"TBD" }}</span>
+          {% if m.is_bye %}<span class="bye-tag">BYE</span>{% endif %}
+        </li>
         {% endfor %}
       </ul>
     </section>
     {% endfor %}
-  </main>
-</body>
-</html>
+  </div>
+{% endblock %}

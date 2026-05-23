@@ -1,29 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>brac7 — Bracket Creator</title>
-  <link rel="stylesheet" href="/static/brac7.css">
-</head>
-<body>
-  <header class="top">
+{% extends "brackets/base.html" %}
+{% block title %}brac7 — Bracket Creator{% endblock %}
+{% block content %}
+  <div class="hero">
     <h1>brac7</h1>
-    <p>Tournament bracket creator — CLI + library + 2D workspace</p>
-    <a class="btn primary" href="{% url 'create_bracket' %}">New bracket</a>
-  </header>
-  <main>
+    <p>Tournament bracket generator — CLI, library, exports, and web UI</p>
+    <a class="btn primary" href="{% url 'create_bracket' %}">+ New bracket</a>
+  </div>
+
+  <section class="section">
     <h2>Recent brackets</h2>
-    <ul class="project-list">
+    {% if projects %}
+    <div class="bracket-grid">
       {% for p in projects %}
-      <li>
-        <a href="{% url 'bracket_detail' p.pk %}">{{ p.title }}</a>
-        <span class="meta">{{ p.format }}</span>
-        <a href="{% url 'workspace_design' p.pk %}">Design →</a>
-      </li>
-      {% empty %}
-      <li>No brackets yet.</li>
+      <div class="bracket-card">
+        <h3><a href="{% url 'bracket_detail' p.pk %}">{{ p.title }}</a></h3>
+        <div class="card-meta">
+          <span class="tag">{{ p.get_format_display }}</span>
+          <span class="tag">{{ p.get_seeding_display }}</span>
+        </div>
+        <p class="card-time">Updated {{ p.updated_at|timesince }} ago</p>
+        <div class="card-actions">
+          <a href="{% url 'bracket_detail' p.pk %}" class="btn">View</a>
+          <a href="{% url 'workspace_design' p.pk %}" class="btn">Design</a>
+        </div>
+      </div>
       {% endfor %}
-    </ul>
-  </main>
-</body>
-</html>
+    </div>
+    {% else %}
+    <p class="empty-state">No brackets yet. <a href="{% url 'create_bracket' %}">Create your first one!</a></p>
+    {% endif %}
+  </section>
+{% endblock %}

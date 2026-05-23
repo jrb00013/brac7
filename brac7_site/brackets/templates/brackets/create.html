@@ -1,19 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>New bracket — brac7</title>
-  <link rel="stylesheet" href="/static/brac7.css">
-</head>
-<body>
-  <header class="top"><a href="{% url 'home' %}">← brac7</a></header>
-  <main class="form-panel">
+{% extends "brackets/base.html" %}
+{% block title %}New bracket — brac7{% endblock %}
+{% block content %}
+  <div class="form-panel">
     <h1>Create bracket</h1>
     <form method="post">
       {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit" class="btn primary">Generate</button>
+      {% for field in form %}
+      <p>
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<span class="help-text">{{ field.help_text }}</span>{% endif %}
+        {% for error in field.errors %}<span class="error-text">{{ error }}</span>{% endfor %}
+      </p>
+      {% endfor %}
+      <button type="submit" class="btn primary">Generate bracket</button>
     </form>
-  </main>
-</body>
-</html>
+  </div>
+{% endblock %}
