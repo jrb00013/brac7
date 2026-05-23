@@ -19,6 +19,7 @@ from brac7.exporters import (
     export_xlsx,
 )
 from brac7.models import BracketOptions, MatchFormat, SeedingMode, TournamentFormat
+from brac7.validation import ParticipantValidator, ValidationError
 
 
 def _parse_format(value: str) -> TournamentFormat:
@@ -207,8 +208,10 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     options = _prompt_options(args)
     members = load_members(args)
-    if len(members) < 2:
-        print("Error: need at least 2 participants.", file=sys.stderr)
+    try:
+        members = ParticipantValidator.validate_names(members)
+    except ValidationError as e:
+        print(f"Error: {e}", file=sys.stderr)
         return 1
 
     engine = BracketEngine(options)
