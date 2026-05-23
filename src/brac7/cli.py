@@ -180,6 +180,26 @@ def resolve_exports(args: argparse.Namespace) -> set[str]:
     return out or {"xlsx", "pdf", "markdown", "mermaid"}
 
 
+def _green(text: str) -> str:
+    return f"\033[92m{text}\033[0m"
+
+
+def _cyan(text: str) -> str:
+    return f"\033[96m{text}\033[0m"
+
+
+def _yellow(text: str) -> str:
+    return f"\033[93m{text}\033[0m"
+
+
+def _bold(text: str) -> str:
+    return f"\033[1m{text}\033[0m"
+
+
+def _red(text: str) -> str:
+    return f"\033[91m{text}\033[0m"
+
+
 def run_exports(bracket, out_dir: Path, slug: str, formats: set[str]) -> list[Path]:
     written: list[Path] = []
     if "xlsx" in formats:
@@ -216,14 +236,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         members = ParticipantValidator.validate_names(members)
     except ValidationError as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"{_red('Error')}: {e}", file=sys.stderr)
         return 1
 
     try:
         engine = BracketEngine(options)
         bracket = engine.generate(members)
     except ValueError as e:
-        print(f"Error generating bracket: {e}", file=sys.stderr)
+        print(f"{_red('Error')} generating bracket: {e}", file=sys.stderr)
         return 1
 
     formats = resolve_exports(args)
@@ -231,18 +251,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         out_dir.mkdir(parents=True, exist_ok=True)
     except OSError as e:
-        print(f"Error creating output directory {out_dir}: {e}", file=sys.stderr)
+        print(f"{_red('Error')} creating output directory {out_dir}: {e}", file=sys.stderr)
         return 1
 
     try:
         paths = run_exports(bracket, out_dir, args.slug, formats)
     except Exception as e:
-        print(f"Error during export: {e}", file=sys.stderr)
+        print(f"{_red('Error')} during export: {e}", file=sys.stderr)
         return 1
 
-    print(f"\nGenerated {bracket.format_label} bracket — {len(bracket.participants)} entrants, size {bracket.size}")
+    print(f"\n{_green('✓')} Generated {_bold(bracket.format_label)} bracket — {len(bracket.participants)} entrants, size {bracket.size}")
     for p in paths:
-        print(f"  → {p.resolve()}")
+        print(f"  {_cyan('→')} {p.resolve()}")
     return 0
 
 
